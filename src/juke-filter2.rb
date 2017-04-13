@@ -2,10 +2,10 @@
 
 while (line = gets)
   result = line.gsub(/([0-9]+)/) do |s|
-    if $1.to_i.odd?
-      '*' * $1.length
+    if s.to_i.odd?
+      '*' * s.length
     else
-      '#' * $1.length
+      '#' * s.length
     end
   end
 
