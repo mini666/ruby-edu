@@ -1,3 +1,4 @@
+From jg in KAKAO
 Ruby crash course for hadoopeng
 ===============================
 
