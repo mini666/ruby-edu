@@ -5,8 +5,6 @@ files = ARGV.flat_map do |path|
     Dir["#{path}/*"]
   elsif File.exist?(path)
     path
-  else
-    nil 
   end 
 end.compact
 
