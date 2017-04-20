@@ -1,6 +1,3 @@
-# ruby-edu
-루비 교육
-
 Ruby crash course for hadoopeng
 ===============================
 
@@ -804,6 +801,8 @@ rescue NameError => e
   puts e.backtrace
 rescue Exception => e
   # 그외 모든 나머지 exception
+ensure
+  # Finally
 end
 
 # Exception 을 던질 때는 `raise` 를 사용한다.
@@ -1056,6 +1055,15 @@ page = urls.lazy.map { |url| open(url).read }.select { |data| data.include?('대
 
 리스트의 일부를 취하는 `first`, `take`, `take_while` 등과 주로 사용하게
 될 것이다.
+
+```ruby
+# lazy 가 있을 때와 없을 때를 비교해볼 것
+(1..20).lazy.
+  select { |e| puts "#{e}.odd?"; e.odd? }.
+  select { |e| puts "#{e} < 10"; e < 20 }.
+  map    { |e| puts "#{e} * 2";  e * 2 }.
+  take(5).to_a
+```
 
 ### Time
 
@@ -1373,29 +1381,29 @@ require 'bundler/setup'
 hadoop/
 ├── Gemfile
 ├── bin
-│   ├── start-hbase
-│   └── start-hdfs
+│   ├── start-hbase
+│   └── start-hdfs
 ├── lib
-│   ├── hadoop
-│   │   ├── hbase
-│   │   │   ├── master.rb
-│   │   │   └── regionserver.rb
-│   │   ├── hbase.rb
-│   │   ├── hdfs
-│   │   │   ├── datanode.rb
-│   │   │   └── namenode.rb
-│   │   ├── hdfs.rb
-│   │   ├── mapreduce.rb
-│   │   ├── yarn
-│   │   │   ├── nm.rb
-│   │   │   └── rm.rb
-│   │   └── zookeeper.rb
-│   └── hadoop.rb
+│   ├── hadoop
+│   │   ├── hbase
+│   │   │   ├── master.rb
+│   │   │   └── regionserver.rb
+│   │   ├── hbase.rb
+│   │   ├── hdfs
+│   │   │   ├── datanode.rb
+│   │   │   └── namenode.rb
+│   │   ├── hdfs.rb
+│   │   ├── mapreduce.rb
+│   │   ├── yarn
+│   │   │   ├── nm.rb
+│   │   │   └── rm.rb
+│   │   └── zookeeper.rb
+│   └── hadoop.rb
 └── test
     ├── hadoop
-    │   ├── test_hbase.rb
-    │   ├── test_hdfs.rb
-    │   └── test_zookeeper.rb
+    │   ├── test_hbase.rb
+    │   ├── test_hdfs.rb
+    │   └── test_zookeeper.rb
     └── test_helper.rb
 ```
 
@@ -1439,6 +1447,16 @@ say('Hello', *['Alice', 'Bob', 'Carol'])
 
 # 변수 할당 시에도 사용할 수 있다.
 first, second, *rest = [1, 2, 3, 4, 5]
+
+# Array 를 만들 때도 사용
+[1, *(2..9), 10]
+
+# x 는 Array 일수도 있고 아닐 수도 있다
+x = rand(2) == 0 ? 1 : [1, 2, 3]
+
+y = [*x]
+  # [*1]         => [1]
+  # [*[1, 2, 3]] => [1, 2, 3]
 ```
 
 #### 참고
@@ -1546,6 +1564,7 @@ end
 를 지원하게 되었다.
 
 ```ruby
+# 디폴트 값이 주어지지 않으면 반드시 주어져야 한다는 의미 (Ruby 2.1 이상)
 def http_get(url, user:, password: nil, port: 80)
   # ...
 end
@@ -1571,15 +1590,101 @@ end
 http_get('kakao.com', port: 1010, user: 'anonymous', foo: 'bar')
 ```
 
+Module
+------
+
+https://ruby-doc.org/core-2.4.1/Module.html
+http://ruby-doc.com/docs/ProgrammingRuby/html/tut_modules.html
+
+> A Module is a collection of methods and constants.
+
+모듈은 상수, module function, instance method 를 가질 수 있으며
+
+- 클래스에 기능을 주입하는 용도 ([Mixin](https://en.wikipedia.org/wiki/Mixin)) 와
+- 네임스페이스 용도로 사용된다.
+
+> In object-oriented programming languages, a mixin is a class that contains
+> methods for use by other classes without having to be the parent class of
+> those other classes.
+
+### Mixin
+
+```ruby
+module Reporter
+  def report
+    puts <<~EOF
+      Class: #{self.class}
+      Object ID: #{object_id}
+      Methods: #{methods}
+    EOF
+  end
+end
+
+class Foo
+  include Reporter
+  def name
+    'foo'
+  end
+end
+
+Foo.new.report
+
+class String
+  include Reporter
+end
+
+'any string'.report
+```
+
+### Namespace
+
+```ruby
+module Doopey
+  VERSION = 'cdh5'
+
+  def self.support?(version)
+    version > VERSION
+  end
+
+  module HDFS
+    HTTP_PORT = '50070'
+
+    class Client
+      # ...
+    end
+  end
+end
+
+Doopey::VERSION
+Doopey.support?('cdh4')
+
+Doopey::HDFS::HTTP_PORT
+Doopey::HDFS::Client.new
+```
+
 문서화
 ------
 
-루비 코드의 API 문서는 rdoc 또는 yard 를 이용해 생성한다. yard 는 별도 설치가
-필요하니 rdoc 에 대해 먼저 익히도록 한다.
+루비 코드의 API 문서는 rdoc 또는 [yard](https://github.com/lsegal/yard)
+를 이용해 생성한다. yard 는 별도 설치가 필요하니 rdoc 에 대해 먼저 익히도록
+한다.
 
 - https://rdoc.github.io/rdoc/
 - https://rdoc.github.io/rdoc/RDoc/Markup.html
+
+다음과 같은 예제를 참고하자.
+
 - https://github.com/rails/rails/blob/master/activemodel/lib/active_model/validations.rb
+    - http://api.rubyonrails.org/classes/ActiveRecord/Validations.html
+
+기본 RDoc 과는 화면 스타일이 다른 것을 볼 수 있는데, Rails 프로젝트의 경우
+RDoc 을 기반으로 만들어진 [SDoc](https://github.com/zzak/sdoc) 을 이용해
+문서를 만든다.
+
+```sh
+gem install sdoc
+sdoc --template rails
+```
 
 테스트
 ------
@@ -1588,8 +1693,10 @@ http_get('kakao.com', port: 1010, user: 'anonymous', foo: 'bar')
 - http://docs.seattlerb.org/minitest/
 
 일반적인 프로젝트에서 루비 소스 코드는 `lib` 디렉토리에 테스트 코드는 `test`
-(혹은 `spec`) 디렉토리에 위치시킨다. 이는 일반적인 컨벤션이므로 반드시 따라야
-하는 것은 아니다.
+([혹은 `spec`][test-vs-spec], 혹은 복수형) 디렉토리에 위치시킨다. 이는
+일반적인 컨벤션이므로 반드시 따라야 하는 것은 아니다.
+
+[test-vs-spec]: https://sites.google.com/site/unclebobconsultingllc/specs-vs-tests
 
 ```ruby
 # lib/foo.rb
@@ -1608,7 +1715,7 @@ end
 ```ruby
 # test/test_foo.rb
 
-require "minitest/autorun"
+require 'minitest/autorun'
 require_relative '../lib/foo'
 
 class TestFoo < Minitest::Test
@@ -1633,8 +1740,10 @@ class TestFoo < Minitest::Test
 end
 ```
 
-사용 가능한 assertion 의 목록은 문서를 참고하거나 pry 에서 `require
-'minitest'` 후 `ls Minitest::Assertion` 으로 확인하자.
+사용 가능한 assertion 의 목록은 [문서를 참고][assertions]하거나 pry 에서
+`require 'minitest'` 후 `ls Minitest::Assertion` 으로 확인하자.
+
+[assertions]: http://docs.seattlerb.org/minitest/Minitest/Assertions.html
 
 여러 테스트 파일을 한번에 실행해야 할 경우 개별 파일들을 로드 (`require`,
 `require_relative`, 혹은 `load`) 하는 별도의 스크립트를 만들어 실행할 수 있다.
@@ -1757,7 +1866,7 @@ $ ./file-stat.rb ~/my-project1 ~/my-project2
 Chronos REST API 를 이용해 등록된 작업들의 이름을 최신실행순 (`lastSuccess`)
 으로 상위 열개만 출력하는 프로그램을 만들어보자.
 
-http://chronos.hbase.dkos.9rum.cc/v1/scheduler/jobs
+http://xxx.xxx.xxx.xxx/v1/scheduler/jobs
 
 ```sh
 $ ./chronos-recent-10.rb
@@ -1777,7 +1886,7 @@ cm-checker-hawk002: 2017-04-03T07:58:12.734Z
 
 아래 링크의 로그는 Tenth map50 클러스터 블락 유실 시의 fsck 의 출력물이다.
 
-http://hbase.dkos-lb.9rum.cc:10000/ruby-study/fsck.output
+http://xxx.xxx.xxx.xxx/ruby-study/fsck.output
 
 위의 파일을 읽어 missing 블락이 포함된 HBase 데이터 파일을 찾고
 (`/hbase/data/default/테이블명/...`) 파일을 구성하는 각 블락 (e.g.
