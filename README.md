@@ -1,4 +1,3 @@
-From jg in KAKAO
 Ruby crash course for hadoopeng
 ===============================
 
@@ -1908,3 +1907,5 @@ blk_1094146585 FCHK 134217728 MISSING
 - https://learnrubythehardway.org/book/
 - https://github.com/dalzony/ruby-style-guide/blob/master/README-koKR.md
 - https://gist.github.com/nacyot/7624036
+
+From jg in KAKAO
