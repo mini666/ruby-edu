@@ -1767,6 +1767,134 @@ end
 
 `rake test` 로 실행할 수 있다.
 
+데이터베이스
+-----------
+
+Ruby 에서 데이터베이스 접근을 위해 많이 사용되는 라이브러리로는 다음과 같은
+것들이 있다.
+
+- [Active Record](http://guides.rubyonrails.org/active_record_basics.html)
+- [DataMapper](http://datamapper.org/)
+- [Sequel](http://sequel.jeremyevans.net/)
+
+Active Record 는 Rails 로 인해 유명해졌지만, Sequel 을 장점을 이야기하는
+이들이 많으므로 이를 사용해보기로 한다.
+
+https://twin.github.io/ode-to-sequel/
+
+테스트를 위한 MySQL 을 설치하고 sequel gem 을 설치한다.
+
+```sh
+brew install mysql
+mysql.server start
+mysql -uroot -e 'create database test'
+gem install sequel
+```
+
+MySQL 에 접속하기 위해서는 [추가적으로 `mysql2` gem
+을 설치](http://sequel.jeremyevans.net/rdoc/files/doc/opening_databases_rdoc.html)해야한다.
+
+```sh
+gem install mysql2
+```
+
+Pry 상에서 다음 코드를 실행해본다.
+
+```ruby
+require 'sequel'
+
+# 접속 옵션은 https://github.com/brianmario/mysql2#connection-options 참고
+DB = Sequel.mysql2(host: 'localhost', username: 'root', database: 'test')
+# DB.execute_ddl 'create database test'
+DB.tables
+
+# http://sequel.jeremyevans.net/rdoc/files/doc/schema_modification_rdoc.html
+DB.create_table!(:events) do
+  primary_key :id
+  String :name
+  Integer :severity
+  Float :score
+  Time :created_at
+  index :name, unique: true
+end
+
+# http://sequel.jeremyevans.net/rdoc/files/README_rdoc.html
+100.times do |i|
+  DB[:events].insert(
+      name: Digest::SHA1.hexdigest(i.to_s),
+      severity: rand(10),
+      score: i,
+      created_at: Time.now)
+end
+
+DB['select * from events'].all
+
+events = DB[:events]
+events.all
+events.select(:name, :score).where(score: 30..40).reverse_order(:score).limit(10).all
+
+events.where { name.is 'a' }
+events.where { name.like('a%') }.all
+events.where { (score > 5) & (score < 10) }.all
+
+# ORM
+class Event < Sequel::Model
+end
+
+# 테이블명은 클래스명의 복수형으로 지정된다. 아래처럼 다른 테이블명을 지정할
+# 수도 있다.
+class MyEvent < Sequel::Model(:events)
+end
+
+Event.table_name
+Event.primary_key
+Event.all
+Event.first
+Event.first.update(name: 'foo')
+Event.where(score: 10..20).update(kcore: 100)
+
+# 신규 레코드 생성, 저장
+e = Event.new
+e.name = 'foobar'
+e.save
+
+Event.where(name: 'foobar').all
+```
+
+테이블간의 관계도 설정할 수 있다.
+
+```ruby
+# event_comments 테이블 생성 후 데이터 입력
+DB.create_table!(:event_comments) do
+  primary_key :id
+  foreign_key :event_id, :events
+
+  String :comment, text: true
+  Time :created_at
+end
+
+Event.select(:id).each do |e|
+  3.times do
+    comment = EventComment.new
+    comment.event_id = e.id
+    comment.comment = 'hello'
+    comment.created_at = Time.now
+    comment.save
+  end
+end
+
+class Event < Sequel::Model
+  one_to_many :event_comments
+end
+
+class EventComment < Sequel::Model
+  many_to_one :event
+end
+
+Event.first.event_comments
+Event.first.event_comments.map(&:event).uniq
+```
+
 연습문제
 --------
 
